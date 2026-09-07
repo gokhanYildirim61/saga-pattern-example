@@ -73,7 +73,8 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     public InventoryItemResponse releaseItem(UUID id) {
         InventoryItem inventoryItem = findItemById(id);
 
-        if (inventoryItem.getStatus() == InventoryStatus.RESERVED) {
+        if (inventoryItem.getStatus() == InventoryStatus.RESERVED
+                || inventoryItem.getStatus() == InventoryStatus.SOLD) {
             inventoryItem.setStatus(InventoryStatus.AVAILABLE);
         }
 

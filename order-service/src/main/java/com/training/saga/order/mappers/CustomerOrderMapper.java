@@ -2,6 +2,7 @@ package com.training.saga.order.mappers;
 
 import com.training.saga.order.api.dto.CreateCustomerOrderRequest;
 import com.training.saga.order.api.dto.CustomerOrderResponse;
+import com.training.saga.order.core.OrderStatus;
 import com.training.saga.order.entites.CustomerOrder;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ public class CustomerOrderMapper {
         customerOrder.setCustomerId(request.getCustomerId());
         customerOrder.setInventoryItemId(request.getInventoryItemId());
         customerOrder.setTotalAmount(request.getTotalAmount());
+        customerOrder.setStatus(OrderStatus.PENDING);
 
         return customerOrder;
     }
