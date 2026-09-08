@@ -5,8 +5,10 @@ import com.training.saga.order.api.dto.CustomerOrderResponse;
 import com.training.saga.order.business.CustomerOrderService;
 import com.training.saga.order.clients.CustomerClient;
 import com.training.saga.order.clients.InventoryClient;
+import com.training.saga.order.clients.NotificationClient;
 import com.training.saga.order.clients.PaymentClient;
 import com.training.saga.order.clients.dto.CustomerClientResponse;
+import com.training.saga.order.clients.dto.NotificationClientRequest;
 import com.training.saga.order.clients.dto.PaymentClientRequest;
 import org.springframework.stereotype.Service;
 
@@ -17,15 +19,18 @@ public class OrderSagaOrchestrator {
     private final CustomerClient customerClient;
     private final InventoryClient inventoryClient;
     private final PaymentClient paymentClient;
+    private final NotificationClient notificationClient;
 
     public OrderSagaOrchestrator(CustomerOrderService customerOrderService,
                                  CustomerClient customerClient,
                                  InventoryClient inventoryClient,
-                                 PaymentClient paymentClient) {
+                                 PaymentClient paymentClient,
+                                 NotificationClient notificationClient) {
         this.customerOrderService = customerOrderService;
         this.customerClient = customerClient;
         this.inventoryClient = inventoryClient;
         this.paymentClient = paymentClient;
+        this.notificationClient = notificationClient;
     }
 
     public CustomerOrderResponse start(CreateCustomerOrderRequest request) {
@@ -48,6 +53,8 @@ public class OrderSagaOrchestrator {
                     order.getTotalAmount(),
                     request.getPaymentMethod()
             ));
+
+            sendPaymentSuccessNotification(order);
 
             return customerOrderService.confirmOrder(order.getId());
         } catch (Exception exception) {
@@ -74,6 +81,19 @@ public class OrderSagaOrchestrator {
             inventoryClient.releaseItem(order.getInventoryItemId());
         } catch (Exception ignored) {
             // Compensation failure would be persisted/logged in a production saga.
+        }
+    }
+
+    private void sendPaymentSuccessNotification(CustomerOrderResponse order) {
+        try {
+            notificationClient.sendNotification(new NotificationClientRequest(
+                    order.getId(),
+                    order.getCustomerId(),
+                    "ORDER_PAYMENT_SUCCESS",
+                    "Order payment completed successfully"
+            ));
+        } catch (Exception ignored) {
+            // Notification is a non-critical side effect in this training saga.
         }
     }
 }
